@@ -7,6 +7,8 @@ import android.text.Html;
 import android.widget.TextView;
 
 import org.joda.time.DateTime;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
@@ -31,14 +33,14 @@ public class MainActivity extends AppCompatActivity {
 
         outputLine("Request Started..");
 
-        new ApiRequest().execute("http://api.worldbank.org/countries/?format=json&per_page=30");
+        new ApiRequest().execute("http://api.worldbank.org/countries/?format=json&per_page=300");
 
     }
 
-    private class ApiRequest extends AsyncTask<String, Double, String> {
+    private class ApiRequest extends AsyncTask<String, Double, JSONArray> {
 
         @Override
-        protected String doInBackground(String... params) {
+        protected JSONArray doInBackground(String... params) {
 
             // check input
             if (params.length != 1)
@@ -67,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 // return our output
-                return output.toString("UTF-8");
+                return new JSONArray(output.toString("UTF-8"));
 
             } catch (Exception e) {
                 // anything went wrong
@@ -78,13 +80,30 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(String result) {
+        protected void onPostExecute(JSONArray result) {
             // check for null
             if (result == null)
                 return;
 
             // show the result to the user
-            outputLine(result);
+            try {
+
+                JSONArray countryList = result.getJSONArray(1);
+                JSONObject country;
+
+                // loop through countries
+                for (int i = 0; i < countryList.length(); i++) {
+                    country = countryList.getJSONObject(i);
+
+                    // output the name
+                    outputLine(country.getString("name"));
+                }
+
+            } catch (Exception e) {
+                // something went wrong
+                e.printStackTrace();
+                outputLine("Something went wronge");
+            }
         }
     }
 
